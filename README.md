@@ -20,3 +20,5 @@ function cmToKm(cm) {
   let km = cm / 100000;
   return km;
 }
+
+Fungsi ini menerima satu argumen, yaitu panjang dalam sentimeter (cm), dan mengembalikan panjang yang setara dalam kilometer (km).
