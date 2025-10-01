@@ -1,4 +1,10 @@
-# 📝 Catatan Git & GitHub Dasar
+# 📘 Catatan Belajar Git & JavaScript Modules
+
+Repository ini berisi catatan singkat mengenai penggunaan **Git** untuk workflow sehari-hari, serta penjelasan dasar mengenai **modul di JavaScript**.
+
+---
+
+## 🐙 Git Dasar
 
 ```bash
 # Setup Repo Baru
@@ -31,8 +37,11 @@ git push
 # Sinkronisasi Repo
 git clone <link-repo>
 git pull
+```
 
-# 📦 Modul di JavaScript
+---
+
+## 📦 Modul di JavaScript
 
 Ada **2 jenis modul utama** dalam JavaScript:  
 1. **CommonJS (CJS)**  
@@ -40,7 +49,7 @@ Ada **2 jenis modul utama** dalam JavaScript:
 
 ---
 
-## 📌 Perbedaan CommonJS vs ES Modules
+### 📌 Perbedaan CommonJS vs ES Modules
 
 | Aspek   | CommonJS (CJS) | ES Modules (ESM) |
 |---------|----------------|------------------|
@@ -49,7 +58,7 @@ Ada **2 jenis modul utama** dalam JavaScript:
 
 ---
 
-## 📝 Contoh Kode
+### 📝 Contoh Kode
 
 ```js
 // CommonJS (CJS)
@@ -72,8 +81,10 @@ export function hello() {
 ---
 
 ## ⚡ Ringkasan
-CommonJS → require, module.exports, default di Node.js lama  
-ES Modules → import, export, standar resmi JavaScript modern
+- **Git** → digunakan untuk version control (init, add, commit, push, pull, branch, PR).  
+- **CommonJS** → pakai `require`, `module.exports`, default di Node.js lama.  
+- **ES Modules** → pakai `import`, `export`, standar modern (ES6 ke atas).  
+
 
 ---
 
