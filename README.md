@@ -1,31 +1,33 @@
-# Exercise 2 - Web Client Developer
+# 📝 Catatan Git & GitHub Dasar
 
-Proyek ini berisi lima fungsi JavaScript yang berbeda untuk latihan pengembangan web client.
+```bash
+# Setup Repo Baru
+echo "# NamaRepo" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/user/NamaRepo.git
+git push -u origin main
 
-## Daftar File
+# Branching & Workflow
+git checkout -b feature/nama-fitur
+git branch            # cek branch aktif (*)
+git status            # lihat status file
+git add .             # tambahkan semua perubahan
+git commit -m "pesan perubahan"
+git push -u origin feature/nama-fitur
+git push              # push berikutnya cukup ini
 
-* `cmToKm.js`: Fungsi untuk mengonversi sentimeter (cm) ke kilometer (km).
-* `fahrenheitToCelsius.js`: Fungsi untuk mengonversi suhu Fahrenheit ke Celsius.
-* `isOdd.js`: Fungsi untuk memeriksa apakah suatu angka ganjil.
-* `isPalindrome.js`: Fungsi untuk memeriksa apakah suatu string adalah palindrom.
-* `removeOccurrence.js`: Fungsi untuk menghapus semua kemunculan karakter tertentu dari sebuah string.
+# Pull Request (PR)
+# buka GitHub → pilih branch baru → klik New Pull Request → arahkan ke main
 
-## Deskripsi Fungsi
+# Update Perubahan
+git switch feature/nama-fitur
+git add .
+git commit -m "perbaikan: bug xyz"
+git push
 
-### `cmToKm.js`
-
-```javascript
-function cmToKm(cm) {
-  // 1 km = 100.000 cm
-  let km = cm / 100000;
-  return km;
-}
-
-### `cmToKm.js`
-
-```javascript
-function cmToKm(cm) {
-  // 1 km = 100.000 cm
-  let km = cm / 100000;
-  return km;
-}
+# Sinkronisasi Repo
+git clone <link-repo>
+git pull
