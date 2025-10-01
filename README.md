@@ -98,7 +98,7 @@ project/
 
 ---
 
-## 📌 1. server.js
+## 📌 1) server.js
 
 ```js
 import express from "express";
@@ -107,28 +107,28 @@ import productRoutes from "./routes/productRoutes.js";
 const app = express();
 const PORT = 1000;
 
-app.use(express.json());             // middleware untuk parsing JSON
-app.use("/products", productRoutes); // semua endpoint produk dengan prefix /products
+app.use(express.json());             // middleware parsing JSON body
+app.use("/products", productRoutes); // pasang router products di prefix /products
 
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
 ```
 
-### 🛠️ Alurnya
+### 🛠️ Alur Singkat
 - `import express` → ambil library Express.  
 - `productRoutes` → impor router khusus products.  
-- `app.use(express.json())` → middleware supaya server bisa membaca request body dalam format JSON (`req.body`).  
-- `app.use("/products", productRoutes)` → semua endpoint di router products otomatis punya prefix `/products`.  
-  - `POST /products/` → bikin produk baru  
+- `app.use(express.json())` → enable baca `req.body` (JSON).  
+- `app.use("/products", productRoutes)` → semua route produk diprefix `/products`:  
+  - `POST /products/` → bikin produk  
   - `GET /products/` → ambil semua produk  
   - `GET /products/:owner/:name` → ambil produk spesifik per toko  
-  - `GET /products/:name` → ambil produk dengan nama tertentu  
+  - `GET /products/:name` → ambil produk dengan nama tertentu (lintas toko)  
 - `app.listen(PORT, ...)` → jalankan server di `http://localhost:1000`.
 
 ---
 
-## 📌 2. routes/productRoutes.js
+## 📌 2) routes/productRoutes.js
 
 ```js
 import { Router } from "express";
@@ -141,77 +141,49 @@ import {
 
 const router = Router();
 
-router.post("/", create);
-router.get("/", findAll);
-router.get("/:owner/:name", findByOwnerAndName);
-router.get("/:name", findByName);
+router.post("/", create);                   // POST   /products
+router.get("/", findAll);                   // GET    /products
+router.get("/:owner/:name", findByOwnerAndName); // GET /products/:owner/:name
+router.get("/:name", findByName);           // GET    /products/:name
 
 export default router;
 ```
 
-### 🛠️ Alurnya
-- `Router()` → bikin sub-router khusus untuk produk.  
-- Routing di sini **tidak ada logika bisnis**, hanya mapping **endpoint → fungsi controller**.  
-- Daftar route:
-  - `POST /products/` → `create` (tambah produk baru).  
-  - `GET /products/` → `findAll` (ambil semua produk).  
-  - `GET /products/:owner/:name` → `findByOwnerAndName` (cari produk spesifik di toko tertentu).  
-  - `GET /products/:name` → `findByName` (cari produk dengan nama tertentu, lintas toko).  
-- `export default router` → router dikirim ke `server.js`.
+**Catatan penting urutan route**: `/:owner/:name` harus didefinisikan **sebelum** `/:name`, agar path dinamis tidak tertangkap oleh yang lebih “umum”.
 
 ---
 
-## 📌 3. controllers/productController.js
+## 📌 3) controllers/productController.js (ringkas)
 
 ```js
 import { findByUsername } from "./userController.js";
 
-// In-memory data (contoh awal, belum pakai database)
 export const products = [
-  {
-    name: "Kopi Susu",
-    category: "Beverage",
-    price: 20000,
-    description: "Kopi susu botolan 250ml",
-    owner: "seller1", // toko A
-  },
+  { name:"Kopi Susu", category:"Beverage", price:20000, description:"Kopi susu botolan 250ml", owner:"seller1" }
 ];
 
-// Utils: normalisasi string untuk cek duplikat
 const norm = (s) => String(s || "").trim().toLowerCase();
 
-// CREATE: Tambah produk baru
 export const create = (req, res) => {
   try {
     const { name, category, price, description, owner } = req.body || {};
 
-    // Validasi field wajib
-    if (!name || !owner) {
-      return res.status(400).json({ error: "field 'name' dan 'owner' wajib diisi" });
-    }
+    if (!name || !owner) return res.status(400).json({ error: "field 'name' dan 'owner' wajib diisi" });
 
-    // Validasi owner (harus ada & role = seller)
     const ownerUser = findByUsername(owner);
     if (!ownerUser) return res.status(400).json({ error: "owner tidak ditemukan di users" });
-    if (String(ownerUser.role || "").toLowerCase() !== "seller") {
-      return res.status(403).json({ error: "hanya seller yang boleh membuat produk" });
-    }
+    if (String(ownerUser.role || "").toLowerCase() !== "seller")
+      return res.status(403).json({ error: "hanya user dengan role 'seller' yang boleh membuat produk" });
 
-    // Validasi price
     if (price !== undefined) {
       const num = Number(price);
-      if (!Number.isFinite(num) || num < 0) {
-        return res.status(400).json({ error: "price harus angka >= 0" });
-      }
+      if (!Number.isFinite(num) || num < 0) return res.status(400).json({ error: "price harus angka >= 0" });
     }
 
-    // Cegah duplikat nama produk di dalam 1 toko
-    if (products.some((p) => norm(p.name) === norm(name) && norm(p.owner) === norm(owner))) {
+    if (products.some(p => norm(p.name) === norm(name) && norm(p.owner) === norm(owner)))
       return res.status(409).json({ error: "produk dengan nama tersebut sudah ada di toko ini" });
-    }
 
-    // Buat produk baru
-    const product = { name, category, price, description, owner };
+    const product = { name: String(name).trim(), category: category ?? null, price: price ?? null, description: description ?? null, owner: String(owner).trim() };
     products.push(product);
     return res.status(201).json(product);
   } catch (err) {
@@ -220,67 +192,124 @@ export const create = (req, res) => {
   }
 };
 
-// GET /products → Ambil semua produk
 export const findAll = (_req, res) => res.json(products);
 
-// GET /products/:owner/:name → Ambil produk spesifik
 export const findByOwnerAndName = (req, res) => {
   const { owner, name } = req.params;
-  const item = products.find(
-    (p) => norm(p.name) === norm(name) && norm(p.owner) === norm(owner)
-  );
+  const item = products.find(p => norm(p.name) === norm(name) && norm(p.owner) === norm(owner));
   if (!item) return res.status(404).json({ error: "produk tidak ditemukan" });
   return res.json(item);
 };
 
-// GET /products/:name → Ambil produk berdasarkan nama (lintas toko)
 export const findByName = (req, res) => {
   const { name } = req.params;
-  const items = products.filter((p) => norm(p.name) === norm(name));
+  const items = products.filter(p => norm(p.name) === norm(name));
   if (items.length === 0) return res.status(404).json({ error: "produk tidak ditemukan" });
   return res.json(items);
 };
 ```
 
-### 🛠️ Alurnya
-- `products` → array penyimpanan sementara.  
-- **create**:
-  - Validasi field wajib (`name`, `owner`).  
-  - Cek owner harus `seller`.  
-  - Validasi `price` harus angka ≥ 0.  
-  - Cegah duplikat nama produk di toko yang sama.  
-  - Tambah produk baru → return `201 Created`.  
-- **findAll**: return semua produk.  
-- **findByOwnerAndName**: cari produk spesifik di 1 toko.  
-- **findByName**: cari semua produk dengan nama sama lintas toko.  
+---
+
+## 🧭 Endpoints
+
+**Base URL**: `http://localhost:1000`  
+**Prefix**: semua endpoint di-mount di `/products` (lihat `server.js`)
+
+| Method | Path                         | Deskripsi                                           |
+|-------:|------------------------------|-----------------------------------------------------|
+| POST   | `/products/`                 | Buat produk baru (hanya untuk owner ber-role seller)|
+| GET    | `/products/`                 | Ambil **semua** produk                              |
+| GET    | `/products/:owner/:name`     | Ambil **1 produk spesifik** milik `owner` tertentu  |
+| GET    | `/products/:name`            | Ambil **semua produk** dengan `name` tertentu (lintas toko) |
+
+### 🧩 Detail Parameter & Body
+
+- **POST `/products/`**
+  - Body JSON:
+    ```json
+    {
+      "name": "Es Teh",
+      "category": "Beverage",
+      "price": 5000,
+      "description": "Es teh manis",
+      "owner": "seller1"
+    }
+    ```
+  - Aturan:
+    - `name` (wajib), `owner` (wajib & harus user valid dengan role `seller`)
+    - `price` opsional, jika ada wajib angka `>= 0`
+    - Nama produk **unik per owner** (boleh sama di owner lain)
+
+  - Status:
+    - `201 Created` → sukses
+    - `400 Bad Request` → field wajib kurang / price invalid / owner tidak ada
+    - `403 Forbidden` → owner bukan seller
+    - `409 Conflict` → duplikat nama di toko yang sama
+    - `500 Internal Server Error` → error tak terduga
+
+- **GET `/products/`**
+  - Response: `200 OK` → array produk
+
+- **GET `/products/:owner/:name`**
+  - Path params:
+    - `owner` → username pemilik toko
+    - `name`  → nama produk
+  - Response:
+    - `200 OK` → objek produk
+    - `404 Not Found` → tidak ketemu
+
+- **GET `/products/:name`**
+  - Path param: `name`
+  - Response:
+    - `200 OK` → **array** produk (bisa >1 toko)
+    - `404 Not Found` → tidak ketemu
+
+> ⚠️ **Catatan routing**: karena ada dua route dinamis, urutan di `productRoutes.js` penting. `/:owner/:name` harus didefinisikan **sebelum** `/:name`.
 
 ---
 
-## 📌 Testing API (contoh pakai curl)
+## 🧪 Contoh Testing (cURL)
 
 ```bash
-# Tambah produk
+# 1) Tambah produk (POST /products)
 curl -X POST http://localhost:1000/products \
   -H "Content-Type: application/json" \
   -d '{"name":"Es Teh","category":"Beverage","price":5000,"description":"Es teh manis","owner":"seller1"}'
 
-# Ambil semua produk
+# 2) Ambil semua produk (GET /products)
 curl http://localhost:1000/products
 
-# Cari produk by owner + name
-curl http://localhost:1000/products/seller1/Kopi%20Susu
+# 3) Cari produk spesifik (GET /products/:owner/:name)
+curl "http://localhost:1000/products/seller1/Kopi%20Susu"
 
-# Cari produk by name (lintas toko)
-curl http://localhost:1000/products/Kopi%20Susu
+# 4) Cari produk berdasarkan nama lintas toko (GET /products/:name)
+curl "http://localhost:1000/products/Kopi%20Susu"
+```
+
+**Contoh respons sukses (POST /products)**
+```json
+{
+  "name": "Es Teh",
+  "category": "Beverage",
+  "price": 5000,
+  "description": "Es teh manis",
+  "owner": "seller1"
+}
+```
+
+**Contoh error (duplikat)**
+```json
+{ "error": "produk dengan nama tersebut sudah ada di toko ini" }
 ```
 
 ---
 
-## ⚡ Kesimpulan
-- `server.js` → entry point, pasang middleware & router.  
-- `productRoutes.js` → mapping URL → controller.  
-- `productController.js` → logika bisnis (validasi, tambah, ambil produk).  
-- Endpoint sudah siap dites via **Postman / curl**.  
-- Saat ini masih pakai **in-memory store**, langkah selanjutnya bisa diganti ke **database (MySQL/MongoDB)**.  
+## ⚡ Ringkasan
+- `server.js` → mount router di `/products` dan enable JSON body.  
+- `productRoutes.js` → definisikan endpoint & mapping ke controller.  
+- `productController.js` → validasi, anti-duplikat per toko, dan pengambilan data.  
+- Endpoints lengkap: `POST /products`, `GET /products`, `GET /products/:owner/:name`, `GET /products/:name`.  
+
 
 
