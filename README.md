@@ -83,6 +83,59 @@ Project ini adalah contoh sederhana REST API menggunakan **Express.js**.
 Arsitektur dipisah menjadi **server → routes → controllers** supaya rapi dan mudah dikembangkan.  
 Data produk disimpan sementara di **in-memory array** (belum pakai database).
 
+## 📝 Penjelasan Alur
+
+### 🔹 Server (`server.js`)
+Server adalah **gerbang utama** aplikasi.  
+Semua request dari client masuk ke sini dulu, lalu diarahkan ke route yang sesuai.
+
+- `import express` → ambil library Express.  
+- `app.use(express.json())` → supaya bisa baca body JSON dari request.  
+- `app.use("/products", productRoutes)` → semua permintaan yang menuju `/products` akan diteruskan ke routes produk.  
+- `app.listen(...)` → nyalakan server di alamat `http://localhost:1000`.
+
+---
+
+### 🔹 Routes (`routes/productRoutes.js`)
+Routes adalah **jalan atau rambu petunjuk**.  
+Tugasnya menghubungkan URL tertentu ke fungsi yang ada di controller.
+
+Contoh:
+- `POST /products/` → arahkan ke controller `create`  
+- `GET /products/` → arahkan ke controller `findAll`  
+- `GET /products/:owner/:name` → arahkan ke controller `findByOwnerAndName`  
+- `GET /products/:name` → arahkan ke controller `findByName`  
+
+---
+
+### 🔹 Controllers (`controllers/productController.js`)
+Controllers adalah **otak** yang menjalankan logika.  
+Di sini ada aturan apa yang harus dicek sebelum memberi jawaban.
+
+Contoh fungsi:
+- `create` → buat produk baru, validasi nama unik per toko, owner harus seller.  
+- `findAll` → ambil semua produk.  
+- `findByOwnerAndName` → ambil produk spesifik milik 1 owner.  
+- `findByName` → cari produk berdasarkan nama (lintas toko).  
+
+---
+
+## 📌 Alur Sederhana
+1. **Client** kirim request (misal `POST /products`).  
+2. **Server** terima request.  
+3. **Routes** cek URL dan method, lalu arahkan ke controller yang sesuai.  
+4. **Controller** jalankan logika (validasi, cek data, dll).  
+5. **Response** dikirim balik ke client dalam bentuk JSON.  
+
+---
+
+## ⚡ Ringkasan Awam
+- **Server** = gerbang masuk  
+- **Routes** = rambu jalan  
+- **Controllers** = otak yang mengolah permintaan  
+
+👉 Alurnya: `Request → Server → Routes → Controllers → Response`
+
 ---
 
 ## 📂 Struktur Project
